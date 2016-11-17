@@ -14,6 +14,7 @@ public class JUnitOptions {
 
     private boolean allowStartedIgnored = false;
     private boolean filenameCompatibleNames = false;
+    private boolean filenameCompatibleNameLength = false;
 
     /**
      * Create a new instance from a list of options, for example:
@@ -36,6 +37,8 @@ public class JUnitOptions {
                 System.exit(0);
             } else if (arg.equals("--no-allow-started-ignored") || arg.equals("--allow-started-ignored")) {
                 allowStartedIgnored = !arg.startsWith("--no-");
+            } else if (arg.equals("--no-filename-compatible-name-length") || arg.equals("--filename-compatible-name-length")) {
+                filenameCompatibleNameLength = !arg.startsWith("--no-");
             } else if (arg.equals("--no-filename-compatible-names") || arg.equals("--filename-compatible-names")) {
                 filenameCompatibleNames = !arg.startsWith("--no-");
             } else {
@@ -50,7 +53,10 @@ public class JUnitOptions {
     public boolean filenameCompatibleNames() {
         return filenameCompatibleNames;
     }
-
+    public boolean filenameCompatibleNameLength() {
+        return filenameCompatibleNameLength;
+    }
+    
     private void printOptions() {
         loadUsageTextIfNeeded();
         System.out.println(optionsText);

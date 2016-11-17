@@ -1,0 +1,7 @@
+jdk:
+  - oraclejdk8
+install:
+  - LANG=C.UTF-8 ./mvnw clean install -DskipTests
+
+
+

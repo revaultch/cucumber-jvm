@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Runs a scenario, or a "synthetic" scenario derived from an Examples row.
@@ -24,7 +25,8 @@ public class ExecutionUnitRunner extends ParentRunner<Step> {
     private final Map<Step, Description> stepDescriptions = new HashMap<Step, Description>();
     private final List<Step> runnerSteps = new ArrayList<Step>();
 
-    public ExecutionUnitRunner(Runtime runtime, CucumberScenario cucumberScenario, JUnitReporter jUnitReporter) throws InitializationError {
+    public ExecutionUnitRunner(Runtime runtime, CucumberScenario cucumberScenario, JUnitReporter jUnitReporter)
+            throws InitializationError {
         super(ExecutionUnitRunner.class);
         this.runtime = runtime;
         this.cucumberScenario = cucumberScenario;
@@ -32,7 +34,7 @@ public class ExecutionUnitRunner extends ParentRunner<Step> {
     }
 
     public List<Step> getRunnerSteps() {
-    	return runnerSteps;
+        return runnerSteps;
     }
 
     @Override
@@ -44,10 +46,12 @@ public class ExecutionUnitRunner extends ParentRunner<Step> {
     public String getName() {
         String name = cucumberScenario.getVisualName();
         if (jUnitReporter.useFilenameCompatibleNames()) {
-            return makeNameFilenameCompatible(name);
-        } else {
-            return name;
+            name = makeNameFilenameCompatible(name);
         }
+        if (jUnitReporter.useFilenameCompatibleNameLength()) {
+            name = truncateToSafeLength(name);
+        }
+        return name;
     }
 
     @Override
@@ -57,15 +61,15 @@ public class ExecutionUnitRunner extends ParentRunner<Step> {
 
             if (cucumberScenario.getCucumberBackground() != null) {
                 for (Step backgroundStep : cucumberScenario.getCucumberBackground().getSteps()) {
-                    // We need to make a copy of that step, so we have a unique one per scenario
+                    // We need to make a copy of that step, so we have a unique
+                    // one per scenario
                     Step copy = new Step(
                             backgroundStep.getComments(),
                             backgroundStep.getKeyword(),
                             backgroundStep.getName(),
                             backgroundStep.getLine(),
                             backgroundStep.getRows(),
-                            backgroundStep.getDocString()
-                    );
+                            backgroundStep.getDocString());
                     description.addChild(describeChild(copy));
                     runnerSteps.add(copy);
                 }
@@ -105,13 +109,29 @@ public class ExecutionUnitRunner extends ParentRunner<Step> {
 
     @Override
     protected void runChild(Step step, RunNotifier notifier) {
-        // The way we override run(RunNotifier) causes this method to never be called.
-        // Instead it happens via cucumberScenario.run(jUnitReporter, jUnitReporter, runtime);
+        // The way we override run(RunNotifier) causes this method to never be
+        // called.
+        // Instead it happens via cucumberScenario.run(jUnitReporter,
+        // jUnitReporter, runtime);
         throw new UnsupportedOperationException();
         // cucumberScenario.runStep(step, jUnitReporter, runtime);
     }
 
     private String makeNameFilenameCompatible(String name) {
         return name.replaceAll("[^A-Za-z0-9_]", "_");
+    }
+
+    private String truncateToSafeLength(String name) {
+        int maxLength = 225;
+        int newLength = Math.min((int) (maxLength * .8), name.length());
+        while (encodedLength(name) > maxLength) {
+            name = name.substring(0, newLength) + "...";
+            newLength *= .8;
+        }
+        return name;
+    }
+
+    private int encodedLength(String in) {
+        return in.replaceAll("([^\\w.\\-_])", "#00").length();
     }
 }
